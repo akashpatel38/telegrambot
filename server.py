@@ -1,6 +1,6 @@
 from flask import Flask
 import threading
-import bot  # ye tera bot.py file import karega
+ # ye tera bot.py file import karega
 
 app = Flask('')
 
