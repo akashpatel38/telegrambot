@@ -34,6 +34,14 @@ def save_codes():
     with open(DATA_FILE, "w") as f:
         json.dump(code_file_map, f)
 
+# ✅ Auto-delete function
+async def auto_delete(context: ContextTypes.DEFAULT_TYPE, chat_id, message_id):
+    await asyncio.sleep(120)  # 2 minutes
+    try:
+        await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except:
+        pass  # ignore if already deleted
+
 # ✅ Start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
@@ -42,22 +50,26 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if code in code_file_map:
             file_info = code_file_map[code]
             file_id = file_info["file_id"]
+
+            # ✅ Instruction before sending file
+            await update.message.reply_text(
+                "✅ SAVE YOUR FILES – THEY WILL BE DELETED WITHIN 2 MINUTES!\n👉 Please forward to Saved Messages."
+            )
+
             # Send file and get sent message
             sent_msg = await update.message.reply_document(file_id, caption="✅ Yeh rahi tumhari file 👇")
+
             # Schedule auto-delete after 2 minutes
             asyncio.create_task(auto_delete(context, sent_msg.chat_id, sent_msg.message_id))
         else:
             await update.message.reply_text("❌ Invalid code!")
     else:
-        await update.message.reply_text("👋 Send a valid code like `/start vidXX`")
-
-# ✅ Auto-delete function
-async def auto_delete(context: ContextTypes.DEFAULT_TYPE, chat_id, message_id):
-    await asyncio.sleep(120)  # 2 minutes
-    try:
-        await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
-    except:
-        pass  # ignore if already deleted
+        # For users who just start the bot without code
+        await update.message.reply_text(
+            "👋 Welcome to the Bot!\n\n"
+            "👉 Please provide a valid code like `/start vidXX`\n\n"
+            "✅ Reminder: Files you receive will auto-delete in 2 minutes, so forward them to Saved Messages."
+        )
 
 # ✅ File upload by Admin
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -78,7 +90,9 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_codes()  # Save to JSON
 
     await update.message.reply_text(
-        f"✅ File saved with code: `{code}`\n\n👉 Share this link:\n`https://t.me/{context.bot.username}?start={code}`",
+        f"✅ File saved with code: `{code}`\n\n"
+        f"👉 Share this link:\n`https://t.me/{context.bot.username}?start={code}`\n\n"
+        f"✅ Reminder: Files will auto-delete in 2 minutes, tell users to save them immediately!",
         parse_mode="Markdown"
     )
 
